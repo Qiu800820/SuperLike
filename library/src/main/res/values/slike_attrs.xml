@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="SuperLikeLayout">
+        <attr name="eruption_element_amount" format="integer" />
+        <attr name="max_eruption_total" format="integer" />
+    </declare-styleable>
+</resources>
