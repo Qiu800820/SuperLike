@@ -2,42 +2,33 @@ package com.sum.slike;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.os.Handler;
 import android.os.Message;
-import android.support.annotation.DrawableRes;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
-import android.util.LruCache;
 import android.view.View;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by Sen on 2018/2/6.
  */
 
-public class SuperLikeLayout extends View implements AnimationEndListener, BitmapProvider{
+public class SuperLikeLayout extends View implements AnimationEndListener{
 
     private static final String TAG = "SuperLikeLayout";
-    private static final int MAX_FRAME_SIZE = 8;
-    private static final int ERUPTION_ELEMENT_AMOUNT = 4;
-    private static final int DURATION = 2000;
+
     private static final long INTERVAL = 40;
-    private int maxFrameSize;
-    private int elementAmount;
-    private int frameCount;
-    private List<AnimationFrame> runnableFrameList;
-    private List<AnimationFrame> idleFrameList;
-    private LruCache<Integer, Bitmap> bitmapLruCache;
-    private @DrawableRes int[] drawableArray;
+    private static final int MAX_FRAME_SIZE = 16;
+    private static final int ERUPTION_ELEMENT_AMOUNT = 4;
+    private AnimationFramePool animationFramePool;
+
     private AnimationHandler animationHandler;
+    private BitmapProvider.Provider provider;
 
 
     public SuperLikeLayout(@NonNull Context context) {
@@ -54,49 +45,48 @@ public class SuperLikeLayout extends View implements AnimationEndListener, Bitma
     }
 
     private void init(@NonNull Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
-        bitmapLruCache = new LruCache<>(maxFrameSize * elementAmount / 2);
-        drawableArray = new int[]{R.drawable.super_like_default_icon};
+
         animationHandler = new AnimationHandler(this);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SuperLikeLayout, defStyleAttr, 0);
-        elementAmount = a.getInteger(R.styleable.SuperLikeLayout_eruption_element_amount, ERUPTION_ELEMENT_AMOUNT);
-        maxFrameSize = a.getInteger(R.styleable.SuperLikeLayout_max_eruption_total, MAX_FRAME_SIZE);
+        int elementAmount = a.getInteger(R.styleable.SuperLikeLayout_eruption_element_amount, ERUPTION_ELEMENT_AMOUNT);
+        int maxFrameSize = a.getInteger(R.styleable.SuperLikeLayout_max_eruption_total, MAX_FRAME_SIZE);
         a.recycle();
+
+        animationFramePool = new AnimationFramePool(maxFrameSize, elementAmount);
     }
 
     @Override
     public void draw(Canvas canvas) {
         super.draw(canvas);
-        if(runnableFrameList == null || runnableFrameList.size() == 0)
+        if(!animationFramePool.hasRunningAnimation())
             return;
         //遍历所有AnimationFrame 并绘制Element
-        for (int i = runnableFrameList.size() - 1; i >= 0; i--) {
-            AnimationFrame animationFrame = runnableFrameList.get(i);
-            List<AnimationFrame.Element> elementList = animationFrame.nextFrame(INTERVAL);
-            for(AnimationFrame.Element element : elementList){
+        // note: 需要倒序遍历 nextFrame方法可能会改变runningFrameList Size 导致异常
+        List<AnimationFrame> runningFrameList = animationFramePool.getRunningFrameList();
+        for (int i = runningFrameList.size() - 1; i >= 0; i--) {
+            AnimationFrame animationFrame = runningFrameList.get(i);
+            List<Element> elementList = animationFrame.nextFrame(INTERVAL);
+            for(Element element : elementList){
                 canvas.drawBitmap(element.getBitmap(), element.getX(), element.getY(), null);
             }
         }
 
     }
 
-    @Override
-    public Bitmap getBitmap(){
-        // todo 控制Bitmap大小 防止OOM
-        int index = (int)(Math.random() * drawableArray.length);
-        Bitmap bitmap = bitmapLruCache.get(drawableArray[index]);
-        if(bitmap == null){
-            bitmap = BitmapFactory.decodeResource(getResources(), drawableArray[index]);
-            bitmapLruCache.put(drawableArray[index], bitmap);
-        }
-        return bitmap;
-    }
-
 
     public void launch(int x, int y) {
-        AnimationFrame animationFrame = obtain();
-        if(animationFrame != null && !animationFrame.isRunnable()) {
-            animationFrame.prepare(x, y, this);
+        // 喷射动画
+        AnimationFrame eruptionAnimationFrame = animationFramePool.obtain(EruptionAnimationFrame.TYPE);
+        if(eruptionAnimationFrame != null && !eruptionAnimationFrame.isRunning()) {
+            eruptionAnimationFrame.setAnimationEndListener(this);
+            eruptionAnimationFrame.prepare(x, y, getProvider());
+        }
+        // combo动画
+        AnimationFrame textAnimationFrame = animationFramePool.obtain(TextAnimationFrame.TYPE);
+        if(textAnimationFrame != null) {
+            textAnimationFrame.setAnimationEndListener(this);
+            textAnimationFrame.prepare(x, y, getProvider());
         }
         animationHandler.removeMessages(AnimationHandler.MESSAGE_CODE_REFRESH_ANIMATION);
         animationHandler.sendEmptyMessageDelayed(AnimationHandler.MESSAGE_CODE_REFRESH_ANIMATION, INTERVAL);
@@ -104,44 +94,30 @@ public class SuperLikeLayout extends View implements AnimationEndListener, Bitma
     }
 
     public boolean hasAnimation(){
-        return runnableFrameList != null && runnableFrameList.size() > 0;
+        return animationFramePool.hasRunningAnimation();
     }
 
-    public void setDrawableArray(@DrawableRes int[] drawableArray){
-        this.drawableArray = drawableArray;
+    public void setProvider(BitmapProvider.Provider provider){
+        this.provider = provider;
     }
 
-    private AnimationFrame obtain() {
-        // 有空闲AnimationFrame直接使用
-        AnimationFrame animationFrame = null;
-        if (idleFrameList != null && !idleFrameList.isEmpty()) {
-            animationFrame = idleFrameList.remove(idleFrameList.size() - 1);
-        } else if (frameCount < maxFrameSize) {
-            frameCount++;
-            animationFrame = new AnimationFrame(elementAmount, DURATION);
-            animationFrame.setAnimationEndListener(this);
+    public BitmapProvider.Provider getProvider(){
+        if(provider == null){
+            provider = new BitmapProvider.Builder(getContext())
+                    .build();
         }
-        if (animationFrame != null) {
-            if (runnableFrameList == null) {
-                runnableFrameList = new ArrayList<>(maxFrameSize);
-            }
-            runnableFrameList.add(animationFrame);
-        }
-        return animationFrame;
+        return provider;
     }
+
+
 
     /**
      * 回收SurpriseView  添加至空闲队列方便下次使用
-     *
-     * @param animationFrame AnimationFrame
      */
     private void onRecycle(AnimationFrame animationFrame) {
-        if (idleFrameList == null)
-            idleFrameList = new ArrayList<>(maxFrameSize);
         Log.v(TAG, "=== AnimationFrame recycle ===");
         animationFrame.reset();
-        runnableFrameList.remove(animationFrame);
-        idleFrameList.add(animationFrame);
+        animationFramePool.recycle(animationFrame);
     }
 
     @Override
@@ -149,11 +125,9 @@ public class SuperLikeLayout extends View implements AnimationEndListener, Bitma
         super.onDetachedFromWindow();
         if(!hasAnimation())
             return;
-        // 回收所有view 并暂停动画
-        for (int i = runnableFrameList.size() - 1; i >= 0; i--) {
-            AnimationFrame animationFrame = runnableFrameList.get(i);
-            onRecycle(animationFrame);
-        }
+        // 回收所有动画 并暂停动画
+        animationFramePool.recycleAll();
+
         animationHandler.removeMessages(AnimationHandler.MESSAGE_CODE_REFRESH_ANIMATION);
     }
 
