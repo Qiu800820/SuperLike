@@ -6,14 +6,14 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     tools:context="com.sum.slike.simple.MainActivity">
-    <TextView
+    <ImageView
         android:id="@+id/like_btn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:text="Like"
         android:textColor="#fff"
-        android:background="#333"
+        android:src="@drawable/ic_favorite_selector"
+
         />
 
     <com.sum.slike.SuperLikeLayout

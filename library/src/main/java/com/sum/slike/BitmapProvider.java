@@ -26,15 +26,17 @@ public class BitmapProvider {
         private @DrawableRes int[] levelDrawableArray;
         private String[] levelStringArray;
         private Context context;
+        private float textSize;
 
         Default(Context context, int cacheSize, @DrawableRes int[] drawableArray, @DrawableRes int[] numberDrawableArray,
-                @DrawableRes int[] levelDrawableArray, String[] levelStringArray){
+                @DrawableRes int[] levelDrawableArray, String[] levelStringArray, float textSize){
             bitmapLruCache = new LruCache<>(cacheSize);
             this.drawableArray = drawableArray;
             this.numberDrawableArray = numberDrawableArray;
             this.levelDrawableArray = levelDrawableArray;
             this.levelStringArray = levelStringArray;
             this.context = context;
+            this.textSize = textSize;
         }
 
         @NonNull
@@ -51,7 +53,7 @@ public class BitmapProvider {
             }else{
                 bitmap = bitmapLruCache.get(NUMBER_PREFIX|number);
                 if(bitmap == null){
-                    bitmap = createBitmapByText(context.getResources().getDimension(R.dimen.default_text_size), String.valueOf(number));
+                    bitmap = createBitmapByText(textSize, String.valueOf(number));
                     bitmapLruCache.put(NUMBER_PREFIX|number, bitmap);
                 }
             }
@@ -73,7 +75,7 @@ public class BitmapProvider {
                 bitmap = bitmapLruCache.get(LEVEL_PREFIX|level);
                 if(bitmap == null){
                     int index = Math.min(level, levelStringArray.length);
-                    bitmap = createBitmapByText(context.getResources().getDimension(R.dimen.default_text_size), levelStringArray[index]);
+                    bitmap = createBitmapByText(textSize, levelStringArray[index]);
                     bitmapLruCache.put(LEVEL_PREFIX|level, bitmap);
                 }
             }
@@ -111,6 +113,7 @@ public class BitmapProvider {
         private @DrawableRes int[] numberDrawableArray;
         private @DrawableRes int[] levelDrawableArray;
         private String[] levelStringArray;
+        private float textSize;
 
         public Builder(Context context){
             this.context = context;
@@ -141,6 +144,11 @@ public class BitmapProvider {
             return this;
         }
 
+        public Builder setTextSize(float textSize){
+            this.textSize = textSize;
+            return this;
+        }
+
         public Provider build(){
 
             if(cacheSize == 0){
@@ -155,8 +163,12 @@ public class BitmapProvider {
                 levelStringArray = new String[]{"鼓励!", "加油!!", "太棒了!!!"};
             }
 
+            if(textSize < 24){
+                textSize = context.getResources().getDimension(R.dimen.slike_default_text_size);
+            }
+
             return new Default(context, cacheSize, drawableArray, numberDrawableArray,
-                    levelDrawableArray, levelStringArray);
+                    levelDrawableArray, levelStringArray, textSize);
         }
     }
 
