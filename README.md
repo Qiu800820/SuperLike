@@ -4,6 +4,7 @@
 主要用于点赞防抖事件的交互提示，这里只提供交互View 防抖功能可以根据Rx自行实现
 ## 演示
  ![image](https://github.com/Qiu800820/SuperLike/blob/master/img/Animation.gif)
+ ![image](https://github.com/Qiu800820/SuperLike/blob/master/img/list_like_animation.gif)
 
 ## 使用
 ```javascript

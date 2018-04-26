@@ -5,16 +5,11 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="com.sum.slike.simple.SimpleActivity">
-    <ImageView
-        android:id="@+id/like_btn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:textColor="#fff"
-        android:src="@drawable/ic_favorite_selector"
-
-        />
+    tools:context="com.sum.slike.simple.RecyclerViewActivity">
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_view"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 
     <com.sum.slike.SuperLikeLayout
         android:id="@+id/super_like_layout"
