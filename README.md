@@ -30,6 +30,14 @@ compile 'com.sum.slike:library:0.2.0'
       <td align="center">max_eruption_total</td>
       <td align="center">最大同时喷射次数</td>
     </tr>
+    <tr>
+        <td align="center">show_emoji</td>
+        <td align="center">是否显示Emoji表情喷射动画</td>
+    </tr>
+    <tr>
+        <td align="center">show_text</td>
+        <td align="center">是否显示Combo文字</td>
+    </tr>
     </tbody>
 </table>
 

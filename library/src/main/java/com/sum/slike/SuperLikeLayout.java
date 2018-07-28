@@ -29,6 +29,8 @@ public class SuperLikeLayout extends View implements AnimationEndListener{
 
     private AnimationHandler animationHandler;
     private BitmapProvider.Provider provider;
+    private boolean hasEruptionAnimation;
+    private boolean hasTextAnimation;
 
 
     public SuperLikeLayout(@NonNull Context context) {
@@ -51,6 +53,8 @@ public class SuperLikeLayout extends View implements AnimationEndListener{
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.SuperLikeLayout, defStyleAttr, 0);
         int elementAmount = a.getInteger(R.styleable.SuperLikeLayout_eruption_element_amount, ERUPTION_ELEMENT_AMOUNT);
         int maxFrameSize = a.getInteger(R.styleable.SuperLikeLayout_max_eruption_total, MAX_FRAME_SIZE);
+        hasEruptionAnimation = a.getBoolean(R.styleable.SuperLikeLayout_show_emoji, true);
+        hasTextAnimation = a.getBoolean(R.styleable.SuperLikeLayout_show_text, true);
         a.recycle();
 
         animationFramePool = new AnimationFramePool(maxFrameSize, elementAmount);
@@ -76,17 +80,24 @@ public class SuperLikeLayout extends View implements AnimationEndListener{
 
 
     public void launch(int x, int y) {
+        if (!hasEruptionAnimation && !hasTextAnimation) {
+            return;
+        }
         // 喷射动画
-        AnimationFrame eruptionAnimationFrame = animationFramePool.obtain(EruptionAnimationFrame.TYPE);
-        if(eruptionAnimationFrame != null && !eruptionAnimationFrame.isRunning()) {
-            eruptionAnimationFrame.setAnimationEndListener(this);
-            eruptionAnimationFrame.prepare(x, y, getProvider());
+        if(hasEruptionAnimation) {
+            AnimationFrame eruptionAnimationFrame = animationFramePool.obtain(EruptionAnimationFrame.TYPE);
+            if (eruptionAnimationFrame != null && !eruptionAnimationFrame.isRunning()) {
+                eruptionAnimationFrame.setAnimationEndListener(this);
+                eruptionAnimationFrame.prepare(x, y, getProvider());
+            }
         }
         // combo动画
-        AnimationFrame textAnimationFrame = animationFramePool.obtain(TextAnimationFrame.TYPE);
-        if(textAnimationFrame != null) {
-            textAnimationFrame.setAnimationEndListener(this);
-            textAnimationFrame.prepare(x, y, getProvider());
+        if(hasTextAnimation) {
+            AnimationFrame textAnimationFrame = animationFramePool.obtain(TextAnimationFrame.TYPE);
+            if (textAnimationFrame != null) {
+                textAnimationFrame.setAnimationEndListener(this);
+                textAnimationFrame.prepare(x, y, getProvider());
+            }
         }
         animationHandler.removeMessages(AnimationHandler.MESSAGE_CODE_REFRESH_ANIMATION);
         animationHandler.sendEmptyMessageDelayed(AnimationHandler.MESSAGE_CODE_REFRESH_ANIMATION, INTERVAL);

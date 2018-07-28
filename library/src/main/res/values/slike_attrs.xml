@@ -3,5 +3,7 @@
     <declare-styleable name="SuperLikeLayout">
         <attr name="eruption_element_amount" format="integer" />
         <attr name="max_eruption_total" format="integer" />
+        <attr name="show_emoji" format="boolean" />
+        <attr name="show_text" format="boolean" />
     </declare-styleable>
 </resources>
