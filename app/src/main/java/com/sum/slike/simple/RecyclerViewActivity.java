@@ -9,6 +9,9 @@ import android.view.View;
 
 import com.sum.slike.SuperLikeLayout;
 
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+
 /**
  * Created by Sen on 2018/4/26.
  */
@@ -36,16 +39,18 @@ public class RecyclerViewActivity extends AppCompatActivity{
     }
 
     CommentAdapter.AdapterItemListener<Boolean> adapterItemListener = new CommentAdapter.AdapterItemListener<Boolean>() {
-        long duration = 2000;
-        long lastClickTime;
+        long duration = 1000;
+        HashMap<Integer, Long> lastClickTimeMap = new LinkedHashMap<>();
+
         @Override
         public void onItemClickListener(Boolean isLike, int position, int id, View v) {
-
-            if(System.currentTimeMillis() - lastClickTime> duration){ // 防抖
+            Long lastClickTime = lastClickTimeMap.get(position);
+            if(lastClickTime == null || System.currentTimeMillis() - lastClickTime> duration){ // 防抖
                 isLike = !isLike;
                 commentAdapter.updateLikeStatusByPosition(isLike, position);
+                // 发起改变like状态的网络请求
             }
-            lastClickTime = System.currentTimeMillis();
+            lastClickTimeMap.put(position, System.currentTimeMillis());
             if(isLike){
                 int[] itemPosition = new int[2];
                 int[] superLikePosition = new int[2];

@@ -8,7 +8,7 @@
 
 ## 使用
 ```javascript
-compile 'com.sum.slike:library:0.2.0'
+compile 'com.sum.slike:library:0.2.1'
 ```
 
 
