@@ -72,7 +72,7 @@ public class SuperLikeLayout extends View implements AnimationEndListener{
             AnimationFrame animationFrame = runningFrameList.get(i);
             List<Element> elementList = animationFrame.nextFrame(INTERVAL);
             for(Element element : elementList){
-                canvas.drawBitmap(element.getBitmap(), element.getX(), element.getY(), null);
+                canvas.drawBitmap(element.getBitmap(), element.getX(), element.getY(), element.getPaint());
             }
         }
 

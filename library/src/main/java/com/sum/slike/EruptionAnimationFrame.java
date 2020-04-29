@@ -1,6 +1,7 @@
 package com.sum.slike;
 
 import android.graphics.Bitmap;
+import android.graphics.Paint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +50,8 @@ public class EruptionAnimationFrame extends BaseAnimationFrame{
         private int y;
         private double angle;
         private double speed;
+        private int alpha;
+        private Paint paint;
         /**
          * 重力加速度px/s
          */
@@ -59,6 +62,7 @@ public class EruptionAnimationFrame extends BaseAnimationFrame{
             this.angle = angle;
             this.speed = speed;
             this.bitmap = bitmap;
+            this.paint = new Paint();
         }
 
         @Override
@@ -79,10 +83,17 @@ public class EruptionAnimationFrame extends BaseAnimationFrame{
         @Override
         public void evaluate(int start_x, int start_y, double time) {
             time = time / 1000;
+            alpha = time < 0.65 ? 255 : (int) (255 * (1 - time));
+            paint.setAlpha(alpha);
             double x_speed = speed * Math.cos(angle * Math.PI / 180);
             double y_speed = -speed * Math.sin(angle * Math.PI / 180);
             x = (int)(start_x + (x_speed * time)  - (bitmap.getWidth() / 2));
             y = (int)(start_y + (y_speed * time) + (GRAVITY * time * time) / 2 - (bitmap.getHeight() / 2));
+        }
+
+        @Override
+        public Paint getPaint() {
+            return paint;
         }
     }
 }

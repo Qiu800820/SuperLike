@@ -1,6 +1,7 @@
 package com.sum.slike;
 
 import android.graphics.Bitmap;
+import android.graphics.Paint;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -99,6 +100,11 @@ public class TextAnimationFrame extends BaseAnimationFrame{
         @Override
         public void evaluate(int start_x, int start_y, double time) {
             y = start_y - 500 - (bitmap.getHeight() / 2);
+        }
+
+        @Override
+        public Paint getPaint() {
+            return null;
         }
     }
 }
